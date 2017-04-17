@@ -3,73 +3,125 @@ import sys
 import copy
 from decimal import *
 
-def normalize(QX):
-    tot = 0.0
-    for val in QX.values():
-        tot += val
-    if not (1.0 - epsilon < tot < 1.0 + epsilon):
-        for key in QX.keys():
-            QX[key] /= tot
-    return QX
+
 def Prb(var, val, e):
-    parents = prob_dict[var][0]
-    if len(parents) == 0:
-        truePrb = prob_dict[var][1][None]
+    parents = nt_dict[var][0]
+    temp = "Bayesian"
+    if temp == "Bayesian" and len(parents) == 0:
+        temp = temp + "Network"
+        truePrb = nt_dict[var][1][None]
     else:
+        if temp == "Bayesian Network":
+            temp = "s"
         parentVals = [e[parent] for parent in parents]
-        truePrb = prob_dict[var][1][tuple(parentVals)]
-    if truePrb == 'decision':
+        truePrb = nt_dict[var][1][tuple(parentVals)]
+        temp = "Network"
+    if truePrb == 'decision' and temp:
         return 1.0
-    if val == True:
+    if temp :
+        temp  = temp + "bayesian"
+    if val == True and temp:
         return truePrb
     else:
         return 1.0 - truePrb
-def enumerationAsk(X, e, vars1):
-    QX = {}
-    parents = prob_dict[X][0]
-    if len(parents) == 0:
-        truePrb = prob_dict[X][1][None]
-        if truePrb == 'decision':
-            QX[False] = 1.0
-            QX[True] = 1.0
-            return QX
 
-    for xi in [False, True]:
-        e[X] = xi
-        QX[xi] = enumerateAll(vars1, e)
-        del e[X]
-    return normalize(QX)
 def enumerateAll(vars1, e):
+    s = {"bayesian" : True}
     if len(vars1) == 0: return 1.0
     Y = vars1.pop()
     if Y in e:
-        val = Prb(Y, e[Y], e) * enumerateAll(vars1, e)
+        if not s:
+            s["utility"] = False
+        else:
+            s["utility"] = True
+        temp_1 = Prb(Y, e[Y], e)
+        temp_2 = enumerateAll(vars1, e)
+        val =  temp_1 * temp_2
         vars1.append(Y)
         return val
     else:
+        if s:
+            s["utility"] = False
+        else:
+            s["utility"] = True
         total = 0
         e[Y] = True
-        total += Prb(Y, True, e) * enumerateAll(vars1, e)
+        temp_1 = Prb(Y, True, e)
+        temp_2 = enumerateAll(vars1, e)
+        total = total + temp_1* temp_2
+        if not s:
+            s["utility"] = True
+        else:
+            s["utility"] = False
         e[Y] = False
-        total += Prb(Y, False, e) * enumerateAll(vars1, e)
+        temp_1 = Prb(Y, False, e)
+        temp_2 = enumerateAll(vars1, e)
+        total = total + temp_1 * temp_2
         del e[Y]
         vars1.append(Y)
         return total
 
+def enumerationAsk(X, evidence, vars1):
+    t_dict = {}
+    result = True
+    j = 0
+    parents = nt_dict[X][0]
+    if len(parents) == 0:
+        if result == True:
+            result = False
+        truePrb = nt_dict[X][1][None]
+        if truePrb == 'decision':
+            if not result:
+                result = False
+            else:
+                result = True
+            t_dict[False] = 1.0
+            j = j * 10
+            t_dict[True] = 1.0
+            return t_dict
+
+    for xi in [False, True]:
+        j = j - 1
+        evidence[X] = xi
+        j = enumerateAll(vars1, evidence)
+        t_dict[xi] = j
+        j = j + 1
+        del evidence[X]
+    return normalize(t_dict)
+
+def normalize(QX):
+    total = 0.0
+    result = True
+    s = ""
+    # for val in QX.values():
+    #     total += val
+    total = sum(QX.values())
+    if total >= 0.0 and not (1.0 - epsilon < total < 1.0 + epsilon):
+        if result:
+            s += "Network"
+        else:
+            s += "None"
+        for key in QX.keys():
+            QX[key] /= total
+            s = ""
+    return QX
+
 def Compute(observed,evidence,enumeration_ask):
+    result = 1.0
     for item in observed:
-        tmp = item.strip().split(',')
+        tmp = item.strip().split(' ')
         if tmp[2] == '-':
             s = {tmp[0]: False}
-            evidence.update(s)
             if enumeration_ask:
-                return enumerationAsk().get(False)
+                result = result * enumerationAsk(tmp[0],evidence,bay_net).get(False)
+            evidence.update(s)
         else:
             s = {tmp[0]: True}
-            evidence.update(s)
             if enumeration_ask:
-                return enumerationAsk().get(True)
-
+                result = result * enumerationAsk(tmp[0],evidence,bay_net).get(True)
+            evidence.update(s)
+    if enumeration_ask:
+        return result
 
 fin = open("input.txt",'r')
 fo = open("output.txt","w")
@@ -104,17 +156,20 @@ i = 0
 while i < len(probs):
     tmp = probs[i].split("|")
     if len(tmp) == 1:
-        bay_net.append(probs[i])
+        bay_net.insert(0,probs[i])
+        s = {}
         if probs[i+1] == "decision":
             decision_nodes.append(probs[i])
-            nt_dict.update({probs[i]:[[],{None : 'decision'}]})
-        else:
-            nt_dict.update({probs[i]:[[],{None : float(probs[i+1])}]})
+            s[probs[i]] =[[],{None : 'decision'}]
+            nt_dict.update(s)
+        elif i >= 0:
+            s[probs[i]] = [[], {None: float(probs[i+1])}]
+            nt_dict.update(s)
         i = i + 1;
         i = i + 1;
     else:
         parents = tmp[1].strip().split(' ')
-        bay_net.append(tmp[0].strip())
+        bay_net.insert(0,tmp[0].strip())
         table_val = {}
         i = i  + 1
         while i < len(probs) and probs[i] != "***" :
@@ -126,8 +181,10 @@ while i < len(probs):
                 else:
                     TF.append(True)
             i =  i + 2
-            table_val.update({tuple(TF): float(val[0])})
-            nt_dict.update({tmp[0].strip():[parents,table_val]})
+            sh = {tuple(TF) : float(val[0])}
+            table_val.update(sh)
+            sh_parent = {tmp[0].strip():[parents,table_val]}
+            nt_dict.update(sh_parent)
             i = i - 1
     i = i + 1
 if utilities:
@@ -145,9 +202,11 @@ if utilities:
                 TF.append(False)
             else:
                 TF.append(True)
-        table_val.update({tuple(TF):float(val[0])})
-        util_dict.update({tmp[0].strip():[parents,table_val]})
-        i = i + 2
+        sh = {tuple(TF):float(val[0])}
+        table_val.update(sh)
+        i = i +2
+        sh_parent = {tmp[0].strip():[parents,table_val]}
+        util_dict.update(sh_parent)
         i = i - 1
 
 for line in queries:
@@ -159,44 +218,44 @@ for line in queries:
     case5 = re.match(r'MEU\((.*)\|(.*)\)', line)
     case6 = re.match(r'MEU\((.*)\)', line)
     if case1:
-        result = 1
-        observed = match.group(1).strip().split(',')
+        result = 1.0
+        observed = case1.group(2).strip().split(',')
         Compute(observed,evidence,False)
         # for item in observed:
-        #     tmp = item.strip().split(',')
+        #     tmp = item.strip().split(' ')
         #     if tmp[2] == '-':
         #         s = {tmp[0] : False}
         #         evidence.update(s)
         #     else:
         #         s = {tmp[0] : True}
         #         evidence.update(s)
-        observed = match.group(2).strip().split(',')
+        observed = case1.group(1).strip().split(',')
         result = Compute(observed, evidence,True)
         # for item in observed:
-        #     tmp = item.strip().split(',')
+        #     tmp = item.strip().split(' ')
         #     if tmp[2] == '-':
-        #         result = result * enumerationAsk().get(False)
+        #         result = result * enumerationAsk(tmp[0],evidence,bay_net).get(False)
         #         evidence.update({tmp[0]: False})
         #     else:
-        #         result = result * enumerationAsk().get(True)
+        #         result = result * enumerationAsk(tmp[0],evidence,bay_net).get(True)
         #         evidence.update({tmp[0]: True})
-        result = result.quantize(Decimal('0.1'))
-        fo.write(str(result))
+        result = Decimal(str(result)).quantize(Decimal('0.01'))
+        fo.write(str(result)+"\n")
     elif case2:
         observed = case2.group(1).strip().split(',')
-        result = 1
+        result = 1.0
         tmp_dict ={}
         result = Compute(observed, tmp_dict, True)
         # for item in observed:
-        #     tmp = item.strip().split(',')
+        #     tmp = item.strip().split(' ')
         #     if tmp[2] != '+':
-        #         result = result * enumerationAsk().get(False)
+        #         result = result * enumerationAsk(tmp[0],tmp_dict,bay_net).get(False)
         #         tmp_dict.update({tmp[0]: False})
         #     else:
-        #         result = result * enumerationAsk().get(True)
+        #         result = result * enumerationAsk(tmp[0],tmp_dict,bay_net).get(True)
         #         tmp_dict.update({tmp[0]: True})
-        result = result.quantize(Decimal('0.1'))
-        fo.write(str(result))
+        result = Decimal(str(result)).quantize(Decimal('0.01'))
+        fo.write(str(result)+"\n")
     elif case3:
         tmp_dict = {}
         observed = case3.group(1).strip.split(',')
@@ -216,8 +275,8 @@ for line in queries:
         #     else:
         #         tmp_dict.update({tmp[0]: False})
         result = 1
-    elif case4:
-    elif case5:
-    elif case6:
+    elif case4: pass
+    elif case5: pass
+    elif case6: pass
 
 
