@@ -145,9 +145,9 @@ def CalcuateEU(case,number):
                 if q.get(z) != tmp_dict.get(z):
                     f = 1
                     break
-                index = index - 2
-                index = index + 3
-        if f:
+            index = index - 2
+            index = index + 3
+        if f == 1:
             continue
         result = 1.0
         new_dict = copy.deepcopy(tmp_dict)
@@ -165,7 +165,6 @@ def CalcuateEU(case,number):
         util = util_dict['utility'][1][tuple(i_list)]
         temp_2 = result * util
         probability = probability + temp_2
-    probability = probability + 0.00000001
     return probability
 
 fin = open("input.txt",'r')
@@ -302,94 +301,94 @@ for line in queries:
         fo.write(str(result)+"\n")
     elif case3:
         probability = 0
-        #probability = CalcuateEU(case3,3)
-        tmp_dict = {}
-        new_dict = {}
-        observed = case3.group(1).strip().split(',')
-        Compute(observed, tmp_dict, False)
-        #if number == 3:
-        observed = case3.group(2).strip().split(',')
-        Compute(observed, tmp_dict, False)
-        result = 1.0
-        probability = 0
-        combination = util_dict['utility'][1]
-        parents = util_dict['utility'][0]
-        for x in combination:
-            index = 0
-            i_list = list(x)
-            q = {}
-            f = 0
-            for z in parents:
-                q[z] = i_list[index]
-                if z in tmp_dict:
-                    if q.get(z) != tmp_dict.get(z):
-                        f = 1
-                        break
-                index = index - 2
-                index = index + 3
-            if f == 1:
-                continue
-            result = 1.0
-            new_dict = copy.deepcopy(tmp_dict)
-            for z in q:
-                if q[z] == False:
-                    temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
-                    result = result * temp_1
-                    sh = {z: False}
-                    new_dict.update(sh)
-                else:
-                    temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
-                    result = result * temp_1
-                    sh = {z: True}
-                    new_dict.update(sh)
-            util = util_dict['utility'][1][tuple(i_list)]
-            temp_2 = result * util
-            probability = probability + temp_2
+        probability = CalcuateEU(case3,3)
+        # tmp_dict = {}
+        # new_dict = {}
+        # observed = case3.group(1).strip().split(',')
+        # Compute(observed, tmp_dict, False)
+        # #if number == 3:
+        # observed = case3.group(2).strip().split(',')
+        # Compute(observed, tmp_dict, False)
+        # result = 1.0
+        # probability = 0
+        # combination = util_dict['utility'][1]
+        # parents = util_dict['utility'][0]
+        # for x in combination:
+        #     index = 0
+        #     i_list = list(x)
+        #     q = {}
+        #     f = 0
+        #     for z in parents:
+        #         q[z] = i_list[index]
+        #         if z in tmp_dict:
+        #             if q.get(z) != tmp_dict.get(z):
+        #                 f = 1
+        #                 break
+        #         index = index - 2
+        #         index = index + 3
+        #     if f == 1:
+        #         continue
+        #     result = 1.0
+        #     new_dict = copy.deepcopy(tmp_dict)
+        #     for z in q:
+        #         if q[z] == False:
+        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
+        #             result = result * temp_1
+        #             sh = {z: False}
+        #             new_dict.update(sh)
+        #         else:
+        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
+        #             result = result * temp_1
+        #             sh = {z: True}
+        #             new_dict.update(sh)
+        #     util = util_dict['utility'][1][tuple(i_list)]
+        #     temp_2 = result * util
+        #     probability = probability + temp_2
         probability = probability + 0.00000001
         result = int(round(probability))
         fo.write(str(result)+"\n")
     elif case4:
         probability = 0
-        #probability = CalcuateEU(case4,4)
-        tmp_dict = {}
-        new_dict = {}
-        observed = case4.group(1).strip().split(',')
-        Compute(observed, tmp_dict, False)
-        result = 1.0
-        probability = 0
-        combination = util_dict['utility'][1]
-        parents = util_dict['utility'][0]
-        for x in combination:
-            index = 0
-            i_list = list(x)
-            q = {}
-            f = 0
-            for z in parents:
-                q[z] = i_list[index]
-                if z in tmp_dict:
-                    if q.get(z) != tmp_dict.get(z):
-                        f = 1
-                        break
-                index = index - 2
-                index = index + 3
-            if f == 1:
-                continue
-            result = 1.0
-            new_dict = copy.deepcopy(tmp_dict)
-            for z in q:
-                if q[z] == False:
-                    temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
-                    result = result * temp_1
-                    sh = {z: False}
-                    new_dict.update(sh)
-                else:
-                    temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
-                    result = result * temp_1
-                    sh = {z: True}
-                    new_dict.update(sh)
-            util = util_dict['utility'][1][tuple(i_list)]
-            temp_2 = result * util
-            probability = probability + temp_2
+        probability = CalcuateEU(case4,4)
+        # tmp_dict = {}
+        # new_dict = {}
+        # observed = case4.group(1).strip().split(',')
+        # Compute(observed, tmp_dict, False)
+        # result = 1.0
+        # probability = 0
+        # combination = util_dict['utility'][1]
+        # parents = util_dict['utility'][0]
+        # for x in combination:
+        #     index = 0
+        #     i_list = list(x)
+        #     q = {}
+        #     f = 0
+        #     for z in parents:
+        #         q[z] = i_list[index]
+        #         if z in tmp_dict:
+        #             if q.get(z) != tmp_dict.get(z):
+        #                 f = 1
+        #                 break
+        #         index = index - 2
+        #         index = index + 3
+        #     if f == 1:
+        #         continue
+        #     result = 1.0
+        #     new_dict = copy.deepcopy(tmp_dict)
+        #     for z in q:
+        #         if q[z] == False:
+        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
+        #             result = result * temp_1
+        #             sh = {z: False}
+        #             new_dict.update(sh)
+        #         else:
+        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
+        #             result = result * temp_1
+        #             sh = {z: True}
+        #             new_dict.update(sh)
+        #     util = util_dict['utility'][1][tuple(i_list)]
+        #     temp_2 = result * util
+        #     probability = probability + temp_2
         probability = probability + 0.00000001
         result = int(round(probability))
         fo.write(str(result)+"\n")
