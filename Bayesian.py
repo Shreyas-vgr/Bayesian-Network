@@ -2,6 +2,9 @@ import re
 import sys
 import copy
 from decimal import *
+boolcomb = {1: [[True], [False]], 2: [[True, False], [True, True], [False, False], [False, True]],
+            3: [[True, True, True], [True, True, False], [True, False, True], [True, False, False], [False, True, True],
+                [False, True, False], [False, False, True], [False, False, False]]}
 
 def Prb(var, val, e):
     parents = nt_dict[var][0]
@@ -124,6 +127,8 @@ def Compute(observed,evidence,enumeration_ask):
 
 def CalcuateEU(case,number):
     tmp_dict = {}
+    s = "network"
+    j = 0
     new_dict = {}
     observed = case.group(1).strip().split(',')
     Compute(observed, tmp_dict, False)
@@ -132,13 +137,19 @@ def CalcuateEU(case,number):
         Compute(observed, tmp_dict, False)
     result = 1.0
     probability = 0
+    j = j + 1
     combination = util_dict['utility'][1]
+    j = j - 1
     parents = util_dict['utility'][0]
     for x in combination:
         index = 0
         i_list = list(x)
         q = {}
         f = 0
+        if s == "bayesian":
+            s = "false"
+        else:
+            s = "true"
         for z in parents:
             q[z] = i_list[index]
             if z in tmp_dict:
@@ -152,14 +163,18 @@ def CalcuateEU(case,number):
         result = 1.0
         new_dict = copy.deepcopy(tmp_dict)
         for z in q:
+            if s == "network":
+                s = "true"
             if q[z] == False:
                 temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
                 result = result * temp_1
+                j = j + 1
                 sh = {z: False}
                 new_dict.update(sh)
             else:
                 temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
                 result = result * temp_1
+                j = j + 2
                 sh = {z: True}
                 new_dict.update(sh)
         util = util_dict['utility'][1][tuple(i_list)]
@@ -167,8 +182,77 @@ def CalcuateEU(case,number):
         probability = probability + temp_2
     return probability
 
+def CalculateMEU(case,number):
+    dictnew = {}
+    query1 = {}
+    dictn = {}
+    answ = {}
+    observed_var = case.group(1).strip().split(',')
+    if number == 5:
+        observed_var1 = case.group(2).strip().split(',')
+        for x in observed_var1:
+            x_spl = x.strip().split(' ')
+            if x_spl[2] == '+':
+                dictnew.update({x_spl[0]: True})
+            else:
+                dictnew.update({x_spl[0]: False})
+
+    prev = -sys.maxint - 1
+    for perm in boolcomb[len(decision_nodes)]:
+        ind1 = 0
+        for x in decision_nodes:
+            x_spl = x.strip()
+            if perm[ind1] == True:
+                dictnew.update({x_spl: True})
+            else:
+                dictnew.update({x_spl: False})
+            ind1 = ind1 + 1
+        val_cal = 1.0;
+        prob = 0;
+        combn = util_dict['utility'][1]
+        parentval1 = util_dict['utility'][0]
+        for x in combn:
+            sq = 0
+            w = list(x)
+            query1 = {}
+            flag = 0
+            for z in parentval1:
+                query1[z] = w[sq]
+                if z in dictnew:
+                    if query1.get(z) != dictnew.get(z):
+                        flag = 1;
+                        break;
+                sq = sq + 1;
+            if flag == 1:
+                continue;
+
+            val_cal = 1.0
+            dictn = copy.deepcopy(dictnew)
+            for y in query1:
+                if query1[y] == True:
+                    val_cal = val_cal * enumerationAsk(y, dictn, bay_net).get(True)
+                    dictn.update({y: True})
+                else:
+                    val_cal = val_cal * enumerationAsk(y, dictn, bay_net).get(False)
+                    dictn.update({y: False})
+            prob = prob + val_cal * util_dict['utility'][1][tuple(w)]
+        if (prev < prob):
+            prev = prob
+            for finval in observed_var:
+                answ.update({finval.strip(): dictnew.get(finval.strip())})
+    pt_str = ""
+    for finval in observed_var:
+        if answ.get(finval.strip()) == True:
+            pt_str = pt_str + '+' + ' '
+        else:
+            pt_str = pt_str + '-' + ' '
+    prev = prev + 0.00000001
+    pt_str = pt_str + str(int(round(prev)))
+    return pt_str
+
 fin = open("input.txt",'r')
 fo = open("output.txt","w")
+file_logs = ""
 epsilon = 0.001
 blocks = fin.read().strip().split("\n")
 probs = []
@@ -283,7 +367,8 @@ for line in queries:
         #         result = result * enumerationAsk(tmp[0],evidence,bay_net).get(True)
         #         evidence.update({tmp[0]: True})
         result = Decimal(str(result)).quantize(Decimal('0.01'))
-        fo.write(str(result)+"\n")
+        file_logs += "\n" + str(result)
+        #fo.write(str(result)+"\n")
     elif case2:
         observed = case2.group(1).strip().split(',')
         result = 1.0
@@ -298,7 +383,8 @@ for line in queries:
         #         result = result * enumerationAsk(tmp[0],tmp_dict,bay_net).get(True)
         #         tmp_dict.update({tmp[0]: True})
         result = Decimal(str(result)).quantize(Decimal('0.01'))
-        fo.write(str(result)+"\n")
+        file_logs += "\n" + str(result)
+        #fo.write(str(result)+"\n")
     elif case3:
         probability = 0
         probability = CalcuateEU(case3,3)
@@ -346,7 +432,8 @@ for line in queries:
         #     probability = probability + temp_2
         probability = probability + 0.00000001
         result = int(round(probability))
-        fo.write(str(result)+"\n")
+        file_logs += "\n" + str(result)
+        #fo.write(str(result)+"\n")
     elif case4:
         probability = 0
         probability = CalcuateEU(case4,4)
@@ -391,8 +478,17 @@ for line in queries:
         #     probability = probability + temp_2
         probability = probability + 0.00000001
         result = int(round(probability))
-        fo.write(str(result)+"\n")
-    elif case5: pass
-    elif case6: pass
+        file_logs += "\n" + str(result)
+        #fo.write(str(result)+"\n")
+    elif case5:
+        result = CalculateMEU(case5,5)
+        file_logs += "\n" + str(result)
+        #fo.write(result+"\n")
+    elif case6:
+        result = CalculateMEU(case6, 6)
+        file_logs += "\n" + str(result)
+        #fo.write(result + "\n")
+fo.write(file_logs[1:])
+fo.close()
 
 
