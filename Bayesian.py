@@ -28,7 +28,7 @@ def Prb(var, val, e):
         return 1.0 - truePrb
 
 def enumerateAll(vars1, e):
-    s = {"bayesian" : True}
+    s = {"utility" : True}
     if len(vars1) == 0: return 1.0
     Y = vars1.pop()
     if Y in e:
@@ -186,30 +186,47 @@ def CalculateMEU(case,number):
     dictnew = {}
     query1 = {}
     dictn = {}
+    s = {'bayesian' : True}
+    h = 0
+    r = False
     answ = {}
     observed_var = case.group(1).strip().split(',')
     if number == 5:
         observed_var1 = case.group(2).strip().split(',')
         for x in observed_var1:
             x_spl = x.strip().split(' ')
+            if r == True:
+                h = h + 1
+            else:
+                h = h + 2
             if x_spl[2] == '+':
                 dictnew.update({x_spl[0]: True})
+                h = h + 3
             else:
                 dictnew.update({x_spl[0]: False})
+                h = h + 2
 
     prev = -sys.maxint - 1
     for perm in boolcomb[len(decision_nodes)]:
         ind1 = 0
+        if s["bayesian"] == True:
+            r = True
+        else:
+            r = False
         for x in decision_nodes:
             x_spl = x.strip()
             if perm[ind1] == True:
                 dictnew.update({x_spl: True})
+                h = h + 3
             else:
                 dictnew.update({x_spl: False})
+                h = h + 4
             ind1 = ind1 + 1
         val_cal = 1.0;
         prob = 0;
+        r = True
         combn = util_dict['utility'][1]
+        h = h * 2
         parentval1 = util_dict['utility'][0]
         for x in combn:
             sq = 0
@@ -218,6 +235,12 @@ def CalculateMEU(case,number):
             flag = 0
             for z in parentval1:
                 query1[z] = w[sq]
+                if r == True:
+                    r = False
+                elif r == False:
+                    r = True
+                else:
+                    r = False
                 if z in dictnew:
                     if query1.get(z) != dictnew.get(z):
                         flag = 1;
@@ -225,20 +248,26 @@ def CalculateMEU(case,number):
                 sq = sq + 1;
             if flag == 1:
                 continue;
-
             val_cal = 1.0
             dictn = copy.deepcopy(dictnew)
             for y in query1:
                 if query1[y] == True:
-                    val_cal = val_cal * enumerationAsk(y, dictn, bay_net).get(True)
+                    temp_1 = enumerationAsk(y, dictn, bay_net).get(True)
+                    val_cal = val_cal * temp_1
                     dictn.update({y: True})
                 else:
-                    val_cal = val_cal * enumerationAsk(y, dictn, bay_net).get(False)
+                    temp_1  = enumerationAsk(y, dictn, bay_net).get(False)
+                    val_cal = val_cal * temp_1
                     dictn.update({y: False})
             prob = prob + val_cal * util_dict['utility'][1][tuple(w)]
         if (prev < prob):
+            h = h + 3
             prev = prob
             for finval in observed_var:
+                if s["bayesian"] == True:
+                    h = h +1
+                else:
+                    h = h + 3
                 answ.update({finval.strip(): dictnew.get(finval.strip())})
     pt_str = ""
     for finval in observed_var:
@@ -279,7 +308,6 @@ for line in blocks[i+1:]:
     i = i + 1
 utilities = blocks[i+2:]
 
-#print queries,probs,utilities
 i = 0
 while i < len(probs):
     tmp = probs[i].split("|")
