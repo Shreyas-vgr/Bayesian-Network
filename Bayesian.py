@@ -2,6 +2,7 @@ import re
 import sys
 import copy
 from decimal import *
+
 boolcomb = {1: [[True], [False]], 2: [[True, False], [True, True], [False, False], [False, True]],
             3: [[True, True, True], [True, True, False], [True, False, True], [True, False, False], [False, True, True],
                 [False, True, False], [False, False, True], [False, False, False]]}
@@ -95,8 +96,6 @@ def normalize(QX):
     total = 0.0
     result = True
     s = ""
-    # for val in QX.values():
-    #     total += val
     total = sum(QX.values())
     if total >= 0.0 and not (1.0 - epsilon < total < 1.0 + epsilon):
         if result:
@@ -301,7 +300,6 @@ for line in blocks:
     queries.append(line)
 
 for line in blocks[i+1:]:
-    #print line
     if line == "******":
         break
     probs.append(line)
@@ -347,7 +345,6 @@ if utilities:
     i = 0
     table_val = {}
     tmp = utilities[i].split("|")
-    #print tmp[0]
     parents = tmp[1].strip().split(" ")
     i = i + 1
     while i < len(utilities):
@@ -376,146 +373,35 @@ for line in queries:
         result = 1.0
         observed = case1.group(2).strip().split(',')
         Compute(observed,evidence,False)
-        # for item in observed:
-        #     tmp = item.strip().split(' ')
-        #     if tmp[2] == '-':
-        #         s = {tmp[0] : False}
-        #         evidence.update(s)
-        #     else:
-        #         s = {tmp[0] : True}
-        #         evidence.update(s)
         observed = case1.group(1).strip().split(',')
         result = Compute(observed, evidence,True)
-        # for item in observed:
-        #     tmp = item.strip().split(' ')
-        #     if tmp[2] == '-':
-        #         result = result * enumerationAsk(tmp[0],evidence,bay_net).get(False)
-        #         evidence.update({tmp[0]: False})
-        #     else:
-        #         result = result * enumerationAsk(tmp[0],evidence,bay_net).get(True)
-        #         evidence.update({tmp[0]: True})
         result = Decimal(str(result)).quantize(Decimal('0.01'))
         file_logs += "\n" + str(result)
-        #fo.write(str(result)+"\n")
     elif case2:
         observed = case2.group(1).strip().split(',')
         result = 1.0
         tmp_dict ={}
         result = Compute(observed, tmp_dict, True)
-        # for item in observed:
-        #     tmp = item.strip().split(' ')
-        #     if tmp[2] != '+':
-        #         result = result * enumerationAsk(tmp[0],tmp_dict,bay_net).get(False)
-        #         tmp_dict.update({tmp[0]: False})
-        #     else:
-        #         result = result * enumerationAsk(tmp[0],tmp_dict,bay_net).get(True)
-        #         tmp_dict.update({tmp[0]: True})
         result = Decimal(str(result)).quantize(Decimal('0.01'))
         file_logs += "\n" + str(result)
-        #fo.write(str(result)+"\n")
     elif case3:
         probability = 0
         probability = CalcuateEU(case3,3)
-        # tmp_dict = {}
-        # new_dict = {}
-        # observed = case3.group(1).strip().split(',')
-        # Compute(observed, tmp_dict, False)
-        # #if number == 3:
-        # observed = case3.group(2).strip().split(',')
-        # Compute(observed, tmp_dict, False)
-        # result = 1.0
-        # probability = 0
-        # combination = util_dict['utility'][1]
-        # parents = util_dict['utility'][0]
-        # for x in combination:
-        #     index = 0
-        #     i_list = list(x)
-        #     q = {}
-        #     f = 0
-        #     for z in parents:
-        #         q[z] = i_list[index]
-        #         if z in tmp_dict:
-        #             if q.get(z) != tmp_dict.get(z):
-        #                 f = 1
-        #                 break
-        #         index = index - 2
-        #         index = index + 3
-        #     if f == 1:
-        #         continue
-        #     result = 1.0
-        #     new_dict = copy.deepcopy(tmp_dict)
-        #     for z in q:
-        #         if q[z] == False:
-        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
-        #             result = result * temp_1
-        #             sh = {z: False}
-        #             new_dict.update(sh)
-        #         else:
-        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
-        #             result = result * temp_1
-        #             sh = {z: True}
-        #             new_dict.update(sh)
-        #     util = util_dict['utility'][1][tuple(i_list)]
-        #     temp_2 = result * util
-        #     probability = probability + temp_2
         probability = probability + 0.00000001
         result = int(round(probability))
         file_logs += "\n" + str(result)
-        #fo.write(str(result)+"\n")
     elif case4:
         probability = 0
         probability = CalcuateEU(case4,4)
-        # tmp_dict = {}
-        # new_dict = {}
-        # observed = case4.group(1).strip().split(',')
-        # Compute(observed, tmp_dict, False)
-        # result = 1.0
-        # probability = 0
-        # combination = util_dict['utility'][1]
-        # parents = util_dict['utility'][0]
-        # for x in combination:
-        #     index = 0
-        #     i_list = list(x)
-        #     q = {}
-        #     f = 0
-        #     for z in parents:
-        #         q[z] = i_list[index]
-        #         if z in tmp_dict:
-        #             if q.get(z) != tmp_dict.get(z):
-        #                 f = 1
-        #                 break
-        #         index = index - 2
-        #         index = index + 3
-        #     if f == 1:
-        #         continue
-        #     result = 1.0
-        #     new_dict = copy.deepcopy(tmp_dict)
-        #     for z in q:
-        #         if q[z] == False:
-        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(False)
-        #             result = result * temp_1
-        #             sh = {z: False}
-        #             new_dict.update(sh)
-        #         else:
-        #             temp_1 = enumerationAsk(z, new_dict, bay_net).get(True)
-        #             result = result * temp_1
-        #             sh = {z: True}
-        #             new_dict.update(sh)
-        #     util = util_dict['utility'][1][tuple(i_list)]
-        #     temp_2 = result * util
-        #     probability = probability + temp_2
         probability = probability + 0.00000001
         result = int(round(probability))
         file_logs += "\n" + str(result)
-        #fo.write(str(result)+"\n")
     elif case5:
         result = CalculateMEU(case5,5)
         file_logs += "\n" + str(result)
-        #fo.write(result+"\n")
     elif case6:
         result = CalculateMEU(case6, 6)
         file_logs += "\n" + str(result)
-        #fo.write(result + "\n")
 fo.write(file_logs[1:])
 fo.close()
 
